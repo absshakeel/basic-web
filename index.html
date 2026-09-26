@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-flag-rot13" content="synt{gu3_sy4t_1f_e1tug_1a_l0he_i13j_f0hep3}">
+<meta name="description" content="Elite CTF Room :: the flag is not in the page, it is in the source :: ROT13 :: decode it in a terminal.">
+<title>root@ctf-room:~ // ELITE CTF ROOM</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box}
+  :root{
+    --bg:#04070a; --panel:#060c10; --line:#12402c; --line2:#0c2a1e;
+    --green:#3dffa0; --green-dim:#7fc3a0; --amber:#ffc857; --red:#ff5f6d;
+    --cyan:#5ee7ff; --grey:#4d6b5e;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Courier New",monospace;
+  }
+  html,body{height:100%}
+  body{
+    margin:0; padding:26px 16px 70px; font-family:var(--mono);
+    color:var(--green-dim); overflow-x:hidden;
+    display:flex; align-items:center; justify-content:center;
+    background:
+      radial-gradient(1100px 640px at 50% -15%, #0c1d16 0%, transparent 62%),
+      radial-gradient(700px 400px at 100% 110%, #061a22 0%, transparent 60%),
+      var(--bg);
+  }
+  /* falling green characters */
+  #rain{position:fixed; inset:0; z-index:0; opacity:.32; pointer-events:none}
+  /* CRT scanlines + vignette */
+  body::after{
+    content:""; position:fixed; inset:0; z-index:9; pointer-events:none;
+    background:repeating-linear-gradient(to bottom,
+      rgba(0,0,0,0) 0 2px, rgba(0,0,0,.22) 2px 4px);
+    box-shadow:inset 0 0 150px rgba(0,0,0,.92);
+    mix-blend-mode:multiply; animation:flicker 8s steps(1) infinite;
+  }
+  @keyframes flicker{0%,96%{opacity:1}97%{opacity:.88}98%{opacity:1}99%{opacity:.9}100%{opacity:1}}
+  @keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+  @keyframes slidein{from{opacity:0; transform:translateY(6px)}to{opacity:1; transform:none}}
+  @keyframes glitch{
+    0%{text-shadow:0 0 0 transparent}
+    20%{text-shadow:-2px 0 var(--red),2px 0 var(--cyan)}
+    40%{text-shadow:2px 0 var(--red),-2px 0 var(--cyan)}
+    60%{text-shadow:-1px 0 var(--red),1px 0 var(--cyan)}
+    80%{text-shadow:0 0 0 transparent}
+    100%{text-shadow:0 0 0 transparent}
+  }
+  @keyframes shimmer{to{background-position:200% center}}
+  .wrap{position:relative; z-index:2; width:100%; max-width:960px}
+  .term{
+    background:linear-gradient(180deg,rgba(8,18,16,.96),rgba(4,10,12,.97));
+    border:1px solid var(--line); border-radius:14px; overflow:hidden;
+    box-shadow:0 0 0 1px #000, 0 40px 90px -40px #000,
+               0 0 70px -35px var(--green), inset 0 0 60px -40px var(--green);
+  }
+  .term-bar{
+    display:flex; align-items:center; gap:10px; padding:10px 14px;
+    background:linear-gradient(#0e1d18,#0a1512); border-bottom:1px solid var(--line2);
+  }
+  .dot{width:11px; height:11px; border-radius:50%; flex:0 0 auto}
+  .d-r{background:#ff5f56; box-shadow:0 0 8px #ff5f5680}
+  .d-y{background:#ffbd2e; box-shadow:0 0 8px #ffbd2e80}
+  .d-g{background:#27c93f; box-shadow:0 0 8px #27c93f80}
+  .term-title{flex:1; text-align:center; font-size:12px; color:var(--grey); letter-spacing:.06em;
+    white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .term-body{padding:18px 18px 22px; font-size:14px; line-height:1.65;
+    min-height:58vh; overflow-wrap:anywhere}
+  .term-body pre{margin:0; font:inherit; white-space:pre-wrap}
+  .banner{
+    margin:0 0 6px; font-size:clamp(7px,2.1vw,13px); line-height:1.05; text-align:center;
+    letter-spacing:.5px; font-weight:700; color:var(--green);
+    background:linear-gradient(90deg,#0b3a26,#3dffa0 45%,#5ee7ff 60%,#0b3a26);
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    background-size:200% auto; animation:shimmer 7s linear infinite;
+    filter:drop-shadow(0 0 12px #3dffa055);
+  }
+  .glitch{
+    text-align:center; color:var(--amber); font-size:clamp(13px,3.4vw,19px);
+    letter-spacing:.22em; margin:10px 0 14px; animation:glitch 5.5s infinite;
+  }
+  .p{color:var(--green); font-weight:700}
+  .c{color:#e8fff2}
+  .o{color:var(--green)}
+  .w{color:var(--amber)}
+  .e{color:var(--red)}
+  .d{color:var(--grey)}
+  .cy{color:var(--cyan)}
+  .ok{color:var(--green); font-weight:700}
+  .line{animation:slidein .28s ease both}
+  .cursor{display:inline-block; width:9px; height:1.05em; vertical-align:-2px;
+    background:var(--green); box-shadow:0 0 10px var(--green); animation:blink 1.05s steps(1) infinite}
+  .bar{height:12px; border:1px solid var(--line); border-radius:3px; padding:2px; margin:4px 0 10px}
+  .bar > i{display:block; height:100%; width:0;
+    background:linear-gradient(90deg,#0d7a4a,var(--green)); box-shadow:0 0 12px #3dffa077}
+  .bar-label{display:flex; justify-content:space-between; font-size:12px; color:var(--grey)}
+  .hint{
+    margin:18px 0 0; padding:14px 16px; border:1px dashed var(--amber);
+    border-radius:10px; background:#ffc8570d; color:#ffe6a8;
+  }
+  .hint b{color:var(--amber)}
+  .hint code,.kb{
+    background:#000; border:1px solid var(--line); border-radius:5px;
+    padding:1px 6px; color:var(--cyan); white-space:nowrap;
+  }
+  .hint .cmd{display:block; margin:8px 0 0; color:var(--cyan);
+    white-space:pre-wrap; text-shadow:0 0 10px #5ee7ff55}
+  .foot{margin-top:14px; font-size:12px; color:var(--grey); text-align:center}
+  .foot .sep{color:#204a38}
+  .hidden{display:none}
+  @media (max-width:560px){
+    .term-body{font-size:12.5px; padding:14px 12px 18px}
+    .term-title{font-size:10.5px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important}
+  }
+</style>
+</head>
+<body>
+<!--
+ ╔══════════════════════════════════════════════════════════════════════╗
+ ║   E L I T E   C T F   R O O M   //   build 1337                      ║
+ ╠══════════════════════════════════════════════════════════════════════╣
+ ║  WARNING: you are reading the SOURCE CODE of this page, you nerd.      ║
+ ║  That is literally the intended solve path. Nice. Keep scrolling.      ║
+ ╚══════════════════════════════════════════════════════════════════════╝
+-->
+<canvas id="rain" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <section class="term" role="region" aria-label="Fake hacker terminal">
+    <header class="term-bar">
+      <span class="dot d-r"></span><span class="dot d-y"></span><span class="dot d-g"></span>
+      <span class="term-title">root@ctf-room: /var/www/html &mdash; bash &mdash; 80x24</span>
+    </header>
+
+    <div class="term-body" id="term">
+      <pre class="banner" aria-label="elite ctf room"> ███████╗██╗     ██╗████████╗███████╗    ██████╗ ████████╗███████╗
+ ██╔════╝██║     ██║╚══██╔══╝██╔════╝    ██╔══██╗╚══██╔══╝██╔════╝
+ ███████╗██║     ██║   ██║   █████╗      ██║  ██║   ██║   █████╗
+ ██╔═══╝ ██║     ██║   ██║   ██╔══╝      ██║  ██║   ██║   ██╔══╝
+ ██║     ███████╗██║   ██║   ███████╗    ██████╔╝   ██║   ██║
+ ╚═╝     ╚══════╝╚═╝   ╚═╝   ╚══════╝    ╚═════╝    ╚═╝   ╚═╝</pre>
+      <h1 class="glitch">&gt;&gt; ROOM STATUS: PWNED &lt;&lt;</h1>
+
+      <p class="line d">Connection to ctf-room closed by remote host. Reconnecting... done.</p>
+      <p class="line"><span class="d">Last login:</span> <span class="cy">Tue Sep 26</span> <span class="cy">11:26:07</span> <span class="d">on</span> ttys004
+      <br><span class="d">This account is currently used by the flag.</span> <span class="d">Hackers welcomed.</span></p>
+
+      <p class="line"><span class="p">root@ctf-room</span>:<span class="cy">/var/www/html</span>$ ls -la
+      <br><span class="d">-rwxr-xr-x  1 root  www-data   812 Sep 26 11:26 index.html</span>
+      <br><span class="d">-rw-r--r--  1 root  www-data     0 Sep 26 11:26 .bash_history</span>
+      <br><span class="d">drwxr-xr-x  2 root  www-data  4096 Sep 26 11:26 .git</span></p>
+
+      <p class="line"><span class="p">root@ctf-room</span>:<span class="cy">/var/www/html</span>$ ./hack.sh
+      <br><span class="d">[</span><span class="o">████████████████████</span><span class="d">]</span> 20% &nbsp;bruteforcing the mainframe&hellip;
+      <br><span class="d">[</span><span class="o">██████████████████████</span><span class="d">]</span> 46% &nbsp;asking politely in 6 languages&hellip;
+      <br><span class="d">[</span><span class="o">██████████████████████████</span><span class="d">]</span> 73% &nbsp;the firewall said "no"&hellip;
+      <br><span class="d">[</span><span class="o">████████████████████████████████</span><span class="d">]</span> 100% &nbsp;firewall politely invited to the party
+      <br><span class="o">&#10003;</span> <span class="ok">PWNED</span> &nbsp;<span class="d">0 warnings, 0 ethics</span>
+      <br><span class="e">&#10007;</span> <span class="e">FAILED</span> &nbsp;<span class="d">sudo: make me a sandwich</span>
+      <br><span class="e">&#10007;</span> <span class="e">FAILED</span> &nbsp;<span class="d">404: skill not found</span>
+      <br><span class="e">&#10007;</span> <span class="e">FAILED</span> &nbsp;<span class="d">Segmentation fault (core dumped) &mdash; your keyboard is fine, calm down</span></p>
+
+      <p class="line"><span class="p">root@ctf-room</span>:<span class="cy">/var/www/html</span>$ cat /flag | rot13
+      <br><span class="w">synt{gu3_sy4t_1f_e1tug_1a_l0he_i13j_f0hep3}</span>
+      <br><span class="d">^ still ROT13. ROT13 is not encryption, it is a group theory joke.</span></p>
+
+      <p class="line"><span class="p">root@ctf-room</span>:<span class="cy">/var/www/html</span>$ <span class="cursor"></span></p>
+    </div>
+  </section>
+
+  <aside class="hint">
+    <b>&#9873; 1337 hint: the flag is NOT on this page. It is in the page's source.</b>
+    <span class="d">&nbsp;(ctrl+U &middot; <code>view-source:</code> &middot; or right-click &rarr; View Page Source &mdash; yes, the one your teacher said not to click)</span>
+    <span class="cmd"># in a real terminal, because that is the funny way:
+  curl -s http://127.0.0.1:8000 | cat
+  # or, on macOS:
+  open -a Safari "view-source:http://127.0.0.1:8000"
+  # ROT13 keeps no secrets. rotate it back:
+  echo 'synt{...}' | tr 'A-Za-z' 'N-ZA-Mn-za-m'</span>
+  </aside>
+
+  <p class="foot">
+    <span class="sep">//</span> no cookies were used to track you, we just read your HTML
+    <span class="sep">//</span> flag format: <code>flag{...}</code>
+    <span class="sep">//</span> built with pure HTML + CSS, zero frameworks, zero regrets
+  </p>
+</div>
+
+<!--
+ ┌────────────────────────────────────────────────────────────────────┐
+ │  ssh root@ctf-room                                                   │
+ └────────────────────────────────────────────────────────────────────┘
+ Last login: Tue Sep 26 11:26:07 2026 from 127.0.0.1 on ttys004
+ Included with this OS: a flag, a grumpy firewall, and a calculator.
+
+ root@ctf-room:~# cat /flag
+ ----------------------------------------------------------------------------
+  ORIG (rot13) : flag{th3_fl4g_1s_r1ght_1n_y0ur_v13w_s0urc3}
+ ----------------------------------------------------------------------------
+ root@ctf-room:~# ./rotate.sh flag
+flag{th3_fl4g_1s_r1ght_1n_y0ur_v13w_s0urc3}
+ [ok]   layer 3  nothing  -> nothing. there is no layer 3. you are done.
+ root@ctf-room:~# sudo make flag appear
+ Sorry, user root is not in the sudoers file. This incident has been reported
+ to the admins. The admins are a rubber duck. It is not interested.
+ root@ctf-room:~# exit
+ logout
+-->
+<div class="hidden" data-layer="3" data-rot13="synt{gu3_sy4t_1f_e1tug_1a_l0he_i13j_f0hep3}"><!-- moo --></div>
+
+<script>
+/* Matrix rain. Pure vanity, zero security, like your password. */
+(function () {
+  var cv = document.getElementById('rain');
+  if (!cv || !cv.getContext) return;
+  var ctx = cv.getContext('2d');
+  var glyphs = 'ｱｲｳｴｵｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉ0123456789ABCDEF<>/\\{}[]$#@%&';
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cols, drops, fontSize = 15, running = true;
+
+  function size() {
+    var dpr = Math.min(window.devicePixelRatio || 1, 2);
+    cv.width = window.innerWidth * dpr;
+    cv.height = window.innerHeight * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.font = fontSize + 'px monospace';
+    cols = Math.ceil(window.innerWidth / fontSize);
+    drops = [];
+    for (var i = 0; i < cols; i++) drops[i] = Math.random() * -60;
+  }
+
+  function draw() {
+    if (!running) return;
+    ctx.fillStyle = 'rgba(4, 7, 10, 0.09)';
+    ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
+    for (var i = 0; i < cols; i++) {
+      var ch = glyphs[Math.floor(Math.random() * glyphs.length)];
+      ctx.fillStyle = Math.random() > 0.985 ? '#b9ffd0' : '#25a05d';
+      ctx.fillText(ch, i * fontSize, drops[i] * fontSize);
+      if (drops[i] * fontSize > window.innerHeight && Math.random() > 0.975) drops[i] = 0;
+      drops[i] += 0.9;
+    }
+    requestAnimationFrame(draw);
+  }
+
+  size();
+  window.addEventListener('resize', size);
+  document.addEventListener('visibilitychange', function () {
+    running = !document.hidden;
+    if (running && !reduce) requestAnimationFrame(draw);
+  });
+  if (reduce) { ctx.clearRect(0, 0, cv.width, cv.height); return; }
+  draw();
+})();
+
+/* Fake "hacking" progress bar that never reaches 100%. Classic. */
+(function () {
+  var term = document.getElementById('term');
+  if (!term) return;
+  var block = document.createElement('p');
+  block.className = 'line';
+  block.innerHTML = '<span class="d">[</span><span class="o" id="pfill"></span><span class="d">]</span> ' +
+    '<span id="pct">0%</span>&nbsp;scanning the interwebs for your flag&hellip; ' +
+    '<span class="d">(it is in the source, ctrl+U)</span>';
+  var prompt = term.querySelector('.cursor');
+  if (prompt) term.insertBefore(block, prompt.parentNode);
+
+  var pct = 0;
+  var fill = document.getElementById('pfill');
+  var label = document.getElementById('pct');
+  var total = 32;
+  var unit = '█';
+  var timer = setInterval(function () {
+    pct = Math.min(99, pct + 1);
+    fill.textContent = unit.repeat(Math.round(total * pct / 100));
+    label.textContent = pct + '%';
+    if (pct >= 99) {
+      clearInterval(timer);
+      label.textContent = '99%';
+      fill.textContent = unit.repeat(total);
+    }
+  }, 90);
+})();
+</script>
+
+
+</body>
+</html>
